@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pkl
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# VS Code
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+
+# MacOS
+.DS_Store
+
+# matplotlib and plot images
+*.png
+
+# dotenv
+.env
+
+# SQLite (caso esteja usando banco local)
+*.sqlite
+*.db
+
+# PyCharm
+.idea/
+
+# FastAPI Swagger cache
+openapi.json
