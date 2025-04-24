@@ -8,11 +8,17 @@ import io
 import base64
 from fastapi.responses import JSONResponse, Response
 
+# ✅ Importa o router da pasta routes
+from routes.grafico_fastapi import router as grafico_router
+
 app = FastAPI(
     title="Comparador de Ativos API",
     description="API para comparar a evolução de rentabilidade de ativos (ações ou cripto)",
     version="1.0"
 )
+
+# ✅ Registra o router do gráfico
+app.include_router(grafico_router)
 
 class ComparacaoRequest(BaseModel):
     ativos: List[str]
@@ -42,7 +48,6 @@ def comparar_ativos(req: ComparacaoRequest):
             })
 
         df_ano = dados.groupby('Ano').first().reset_index()
-
         total_unidades = 0
         historico = []
 
@@ -82,42 +87,3 @@ def comparar_ativos(req: ComparacaoRequest):
         "comparacao": resultado,
         "grafico_base64": imagem_base64
     })
-
-
-# ✅ NOVA ROTA: /grafico/{ativo} (retorna imagem diretamente)
-@app.get("/grafico/{ativo}", response_class=Response)
-def gerar_grafico_individual(ativo: str = Path(..., description="Ticker do ativo (ex: PETR4.SA)")):
-    dados = yf.download(ativo, period="5y", interval="1mo", auto_adjust=False)
-
-    if 'Adj Close' not in dados.columns or dados.empty:
-        return JSONResponse(status_code=404, content={"erro": f"Dados indisponíveis para o ativo {ativo}."})
-
-    dados = dados[dados['Adj Close'].notna()]
-    dados['Ano'] = dados.index.year
-    df_ano = dados.groupby('Ano').first().reset_index()
-
-    total_unidades = 0
-    aporte = 500
-    valores = []
-
-    for _, row in df_ano.iterrows():
-        preco = float(row['Adj Close'])
-        total_unidades += aporte / preco
-        preco_final = float(df_ano['Adj Close'].iloc[-1])
-        valores.append(total_unidades * preco_final)
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df_ano['Ano'], valores, marker='o', label=ativo)
-    ax.set_title(f"Evolução do Ativo: {ativo}")
-    ax.set_xlabel("Ano")
-    ax.set_ylabel("Valor Acumulado (€)")
-    ax.grid(True)
-    ax.legend()
-
-    buf = io.BytesIO()
-    plt.tight_layout()
-    plt.savefig(buf, format='png')
-    plt.close(fig)
-    buf.seek(0)
-
-    return Response(content=buf.read(), media_type="image/png")
